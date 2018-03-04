@@ -1,0 +1,56 @@
+﻿@{
+    Layout = "~/_Layout.cshtml";
+    Page.Title = "Scripture Journal";
+
+    var db = Database.Open("ScriptureNotes");
+    var selectCommand = "SELECT * FROM Scripture";
+    var searchTerm = "";
+
+    if (!Request.QueryString["searchBook"].IsEmpty())
+    {
+        selectCommand = "SELECT * FROM Scripture WHERE Book = @0";
+        searchTerm = Request.QueryString["searchBook"];
+    }
+
+    if (!Request.QueryString["searchNote"].IsEmpty())
+    {
+        selectCommand = "SELECT * FROM Scripture WHERE Note LIKE @0";
+        searchTerm = "%" + Request["searchNote"] + "%";
+    }
+
+    var selectedData = db.Query(selectCommand, searchTerm);
+    var grid = new WebGrid(source: selectedData, rowsPerPage: 5);
+
+}
+
+    <h2>My Scripture Journal</h2>
+    <form method="get">
+        <div>
+            <label for="searchBook">Book Name:</label>
+            <input type="text" name="searchBook" value="@Request.QueryString["searchBook"]" />
+            <input type="Submit" value="Search by book" /><br />
+            (Leave blank to show all notes.)<br />
+        </div>
+        <div>
+            <label for="searchNote">Keyword in notes:</label>
+            <input type="text" name="searchNote" value="@Request.QueryString["searchNote"]" />
+            <input type="Submit" value="Search Notes" /><br />
+        </div>
+    </form>
+    <div id="dataBase">
+        @grid.GetHtml(
+                                 tableStyle: "grid",
+                                 headerStyle: "head",
+                                 alternatingRowStyle: "alt",
+                                 columns: grid.Columns(
+                                 grid.Column(format: @<a href="~/EditNote?id=@item.Id">Edit</a>),
+                                 grid.Column("Book"),
+                                 grid.Column("Chapter"),
+                                 grid.Column("Verse"),
+                                 grid.Column("Note"),
+                                 grid.Column("Date"),
+                                 grid.Column(format:@<a href="~/DeleteNote?id=@item.Id">Delete</a>)
+                                 )
+                            )
+    </div>
+    <a href="~/AddNote.cshtml">Add a note</a>
